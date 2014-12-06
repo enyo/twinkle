@@ -64,11 +64,13 @@
       canvas = document.querySelector('#mosaic canvas');
       image = document.querySelector('#mosaic img');
       ctx = canvas.getContext('2d');
-      // canvas.addEventListener('click', fadeOut);
+      canvas.addEventListener('click', fadeOut);
 
       parseTriangleData();
       draw();
+      twinkle();
 
+      return;
       if (image.complete) fadeOut();
       else {
         twinkle();
@@ -127,9 +129,9 @@
       if (twinklingTriangles[idx] && now - twinklingTriangles[idx] < twinkleDuration) {
         var whitePercentage = 1 - (now - twinklingTriangles[idx]) / twinkleDuration;
 
-        color = [ Math.round((255 - color[0]) * whitePercentage +  color[0]),
-                  Math.round((255 - color[1]) * whitePercentage +  color[1]),
-                  Math.round((255 - color[2]) * whitePercentage +  color[2]) ];
+        color = [ _whiteColor(color[0], whitePercentage),
+                  _whiteColor(color[1], whitePercentage),
+                  _whiteColor(color[2], whitePercentage) ];
       }
 
       // var twinkling = twinklingTriangles.
@@ -139,6 +141,9 @@
       ctx.closePath();
     }
 
+    function _whiteColor(color, percentage) {
+      return Math.round((255 - color) * percentage +  color);
+    }
 
     var fadeOutLength = 1500; // ms
 
@@ -160,7 +165,8 @@
     var twinkleAnimationId,
         twinklingTriangles = {},
         twinkleDuration = 2000,
-        twinkleInterval = 100; // ms
+        twinkleInterval = 100
+        _lastTwinkleTime = 0; // ms
 
     function twinkle() {
       twinkleAnimationId = requestAnimationFrame(_twinkleStep);
@@ -172,12 +178,9 @@
       var lastTwinkleTime = 0,
           now = new Date().getTime();
 
-      for(var idx in twinklingTriangles) {
-        var twinkleTriangle = twinklingTriangles[idx];
-        lastTwinkleTime = Math.max(twinkleTriangle, lastTwinkleTime);
-      }
       if (now - lastTwinkleTime > twinkleInterval) {
         twinklingTriangles[Math.floor(Math.random() * triangles.length)] = now;
+        _lastTwinkleTime = now;
       }
       draw();
 
