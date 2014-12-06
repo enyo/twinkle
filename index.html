@@ -64,13 +64,10 @@
       canvas = document.querySelector('#mosaic canvas');
       image = document.querySelector('#mosaic img');
       ctx = canvas.getContext('2d');
-      canvas.addEventListener('click', fadeOut);
+      // canvas.addEventListener('click', fadeOut);
 
       parseTriangleData();
       draw();
-
-      twinkle();
-      return;
 
       if (image.complete) fadeOut();
       else {
