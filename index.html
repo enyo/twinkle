@@ -33,8 +33,20 @@
     width: 100%;
     height: 200px;
   }
-  #mosaic img {
+  #mosaic #original {
     /*display: none;*/
+    opacity: 0;
+  }
+  #mosaic #original.visible {
+    opacity: 1;
+  }
+  #mosaic canvas {
+    /*display: none;*/
+    opacity: 1;
+    transition: opacity 1s ease-in-out;
+  }
+  #mosaic canvas.hidden {
+    opacity: 0;
   }
   #mosaic img,
   #mosaic canvas {
@@ -49,8 +61,7 @@
 <div id="fps"></div>
 <div id="container">
   <div id="mosaic">
-    <img src="school.jpg">
-    <canvas></canvas>
+    <img id="original" src="school.jpg">
   </div>
 </div>
 
@@ -75,19 +86,21 @@
 
     var start; // ms
 
+    var maskCount = 5;
+
     var imageWidth = 2560,
         imageHeight = 1600,
         scaleFactor = 4,
-        width = 2560 / scaleFactor,
-        height = 1600 / scaleFactor,
+        actualWidth,
+        actualHeight,
         dpiDensity = 2;
+
+    var canvasElements = [];
 
     function init() {
       fpsElement = document.querySelector('#fps');
 
       containerElement = document.querySelector('#mosaic');
-      canvas = document.querySelector('#mosaic canvas');
-
       
       imageElement = document.querySelector('#mosaic img');
 
@@ -96,9 +109,6 @@
         setDimensions();
         draw();
       });
-
-      ctx = canvas.getContext('2d');
-      canvas.addEventListener('click', fadeOut);
 
 
       start = _lastStepTime = new Date().getTime();
@@ -111,29 +121,62 @@
       }
       shuffle(randomizedTriangleIndices);
 
-      draw();
-      twinkle();
+      if (triangles.length <= 5) throw new Exception();
 
-      // if (image.complete) fadeOut();
-      // else {
-      //   twinkle();
-      //   image.onload = fadeOut;
-      // }
+
+      for (var i = 0; i < maskCount; i++) {
+
+        var canvas = document.createElement('canvas');
+        setDimensionsOnCanvas(canvas); 
+        containerElement.appendChild(canvas);
+
+        canvas.addEventListener('click', fadeOut);
+
+        canvasElements.push(canvas);
+
+      }
+
+      draw();
+
+      if (imageElement.complete) fadeOut();
+      else {
+        imageElement.onload = fadeOut;
+      }
     }
 
     function setDimensions() {
-      var actualWidth = containerElement.offsetWidth,
-          actualHeight = Math.round(actualWidth * (imageHeight / imageWidth));
+      actualWidth = containerElement.offsetWidth;
+      actualHeight = Math.round(actualWidth * (imageHeight / imageWidth));
 
       scaleFactor = (imageWidth / actualWidth) / dpiDensity;
 
-      canvas.style.height = actualHeight + 'px';
+
+      var canvasElements = document.querySelectorAll('#mosaic canvas');
+      for (var i = 0; i < canvasElements.length; i++) {
+        setDimensionsOnCanvas(canvasElements[i]);
+      }
 
       containerElement.style.height = actualHeight + 'px';
 
       imageElement.style.width = actualWidth + 'px';
       imageElement.style.height = actualHeight + 'px';
 
+    }
+
+    function fadeOut() {
+      imageElement.classList.add('visible');
+      var canvasElements = document.querySelectorAll('#mosaic canvas');
+      for (var i = 0; i < canvasElements.length; i++) {
+        setTimeout(function(canvas) {
+          return function() {
+            canvas.classList.add('hidden');
+          }; }(canvasElements[i]), i * 300);
+      }
+    }
+
+    function setDimensionsOnCanvas(canvas) {
+      canvas.style.width = actualWidth + 'px';
+      canvas.style.height = actualHeight + 'px';
       canvas.width = actualWidth * dpiDensity;
       canvas.height = actualHeight * dpiDensity;
     }
@@ -159,39 +202,30 @@
 
     function draw() {
 
-      ctx.clearRect(0, 0, width, height);
+      for (var i = 0; i < maskCount; i++) {
 
-      triangles.forEach(function(triangle, idx) {
-        drawTriangle(triangle, idx, new Date().getTime());
-      });
+        var canvas = canvasElements[i];
 
+        ctx = canvas.getContext('2d');
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (var ii = Math.round(i * triangles.length / maskCount); ii < Math.round((i+1) * triangles.length / maskCount); ii++) {
+          // console.log(ii);
+          var triangle = triangles[randomizedTriangleIndices[ii]];
+          drawTriangle(triangle, new Date().getTime());
+        }
+
+      }
     }
 
-    function drawTriangle(triangle, idx, now, alpha) {
+    function drawTriangle(triangle, now, alpha) {
 
       alpha = alpha === undefined ? 1 : alpha;
 
-      if (alpha != 1) {
-        ctx.globalCompositeOperation = 'destination-out';
-
-        ctx.beginPath();
-
-        ctx.moveTo(triangle.a.x / scaleFactor, triangle.a.y / scaleFactor);
-        ctx.lineTo(triangle.b.x / scaleFactor, triangle.b.y / scaleFactor);
-        ctx.lineTo(triangle.c.x / scaleFactor, triangle.c.y / scaleFactor);
-        ctx.lineTo(triangle.a.x / scaleFactor, triangle.a.y / scaleFactor);
-
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.globalCompositeOperation = 'source-over';
-        alpha = Math.max(0, alpha);
-      }
-
       if (alpha === 0) return;
 
-      ctx.fillStyle = 'rgba(' + triangle.color[0] + ',' + triangle.color[1] + ',' + triangle.color[2] + ', ' + alpha + ')';
-      ctx.strokeStyle = 'rgba(' + triangle.originalColor[0] + ',' + triangle.originalColor[1] + ',' + triangle.originalColor[2] + ', ' + alpha + ')';
+      ctx.fillStyle = ctx.strokeStyle = 'rgba(' + triangle.color[0] + ',' + triangle.color[1] + ',' + triangle.color[2] + ', ' + alpha + ')';
 
       ctx.beginPath();
 
@@ -281,17 +315,6 @@
       twinkleAnimationId = requestAnimationFrame(_twinkleStep);
     }
 
-
-    function fadeOut() {
-      if (fadeOutStart) return;    
-      cancelAnimationFrame(twinkleAnimationId);
-
-      fadeOutStart = new Date().getTime();
-
-      _fadeOutInterval = fadeOutLength / randomizedTriangleIndices.length;
-
-      requestAnimationFrame(_fadeOutStep);
-    }
 
     // function _fadeOutStep() {
 
