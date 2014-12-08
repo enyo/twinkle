@@ -299,7 +299,7 @@
           drawTriangle(ctx, triangle, new Date().getTime(), scaleFactor);
         }
 
-        setTimeout(function(canvas) { return function() { if (!fadingOut) canvas.classList.remove('hidden'); }; }(canvas), i*100);
+        // setTimeout(function(canvas) { return function() { if (!fadingOut) canvas.classList.remove('hidden'); }; }(canvas), i*100);
       }
     }
 
@@ -363,6 +363,7 @@
       // twinkleCanvas.style.display = 'none';
       
       var twinkleCanvas = twinkleCanvasElements[_nextTwinkleIndex];
+      var scaleFactor = imageData.width / twinkleCanvas.width;
 
       _nextTwinkleIndex = (_nextTwinkleIndex + 1) % twinkleMaskCount;
 
@@ -374,7 +375,7 @@
 
       for (var i = 0; i < randomIndices.length / 30; i++) {
         var triangle = imageData.triangles[randomIndices[i]];
-        drawTriangle(ctx, triangle, new Date().getTime(), [ 255, 255, 255 ]);
+        drawTriangle(ctx, triangle, new Date().getTime(), scaleFactor, [ 255, 255, 255 ]);
       }
 
       // twinkleCanvas.style.display = 'block';
