@@ -204,11 +204,8 @@
       //   }
       // }, 2000);
 
-      if (imageElement.complete) fadeOut();
-      else {
-        twinkle(imageData);
-        imageElement.onload = fadeOut;
-      }
+      twinkle(imageData);
+      imageElement.onload = fadeOut;
 
       imageElement.src = imageData.src;
     }
@@ -424,7 +421,7 @@
         document.querySelector('#thumbnails').appendChild(png);
       }
 
-      // showImage(imageDatas[Math.floor(Math.random() * imageDatas.length)]);
+      showImage(imageDatas[Math.floor(Math.random() * imageDatas.length)]);
     }
 
     document.addEventListener("DOMContentLoaded", init);
